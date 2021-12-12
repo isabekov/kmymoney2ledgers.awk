@@ -89,6 +89,10 @@ END {
            match(f[line], /value="([^"]+)"/, base_curr_arr)
            base_currency = base_curr_arr[1]
        }
+       if (f[line] ~ /<TRANSACTIONS/) {
+           match(f[line], /count="([^"]+)"/, txn_cnt_arr)
+           txn_cnt_tot = txn_cnt_arr[1]
+       }
    }
 
    # Header for Beancount output
@@ -114,8 +118,15 @@ END {
    }
 
    # Transactions
+   t = 0
    for (x in f) {
        if (f[x] ~ /<TRANSACTION /){
+           # Increment transaction counter
+           t++
+           # Logging to display progress in the standard error stream
+           if ((t % 1000 == 0) || (t == 1) || (t == 10) || (t == 100) || (t == txn_cnt_tot)){
+               print "Processiong transaction", t, "out of", txn_cnt_tot > "/dev/stderr"
+           }
            match(f[x], /id="([^"]+)"/, tr_id)
            match(f[x], /postdate="([^"]+)"/, post_date)
            # Date separator for hledger and beancount differ
