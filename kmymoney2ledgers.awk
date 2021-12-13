@@ -93,6 +93,16 @@ END {
            match(f[line], /count="([^"]+)"/, txn_cnt_arr)
            txn_cnt_tot = txn_cnt_arr[1]
        }
+       if (f[line] ~ /<TAGS/){
+           while (f[line] !~/<\/TAGS/){
+               if (f[line] ~/<TAG /){
+                   match(f[line], /id="([^"]+)"/, tags_id_arr)
+                   match(f[line], /name="([^"]+)"/, tags_name_arr)
+                   tags[tags_id_arr[1]] = tags_name_arr[1]
+               }
+               line++
+           }
+       }
    }
 
    # Header for Beancount output
@@ -132,9 +142,13 @@ END {
            # Date separator for hledger and beancount differ
            post_date_str = tub ? post_date[1] : gensub(/-/, "/", "g", post_date[1])
            match(f[x], /commodity="([^"]+)"/, txn_commodity)
+
+           # Split counter. It should be reset to zero outside the while-loop.
+
            c = 0
-           while(f[x] !~ /<\/TRANSACTION/){
+           while(f[x] !~ /<\/TRANSACTION/){ # Till the end of transaction definition.
                if (f[x] ~ /<SPLIT /){
+                  g = 0
                   ++c
                   match(f[x], /payee="([^"]+)"/, sp_payee)
                   sp_lst_payee[c] = sp_payee[1]
@@ -175,13 +189,32 @@ END {
                       }
                   }
                }
+               if (f[x] ~ /<TAG/){
+                   match(f[x], /id="([^"]+)"/, sp_tags_arr)
+                   sp_lst_tags[c,g] = sp_tags_arr[1]
+                   #print "Tags[", c, ",", g, "]",  sp_lst_tags[c,g]
+                   g++
+               }
+               sp_slt_tag_cnt[c] = g
                x++
            }
+
            print "\n;", tr_id[1]
+           for (i=1; i <= c; i++){
+               tags_concat = ""
+               for (j=0; j <= sp_slt_tag_cnt[i]; j++){
+                   tags_concat = sprintf("%s %s", tags_concat, tags[sp_lst_tags[i,j]])
+               }
+               print "Split", i, ", Tags: " tags_concat
+           }
+           delete sp_lst_tags
            printf("%s * \"%s\" ; %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1])
+
 
            # Splits in a transaction
            for (i=1; i <= c; i++){
+
+
                sp_acnt_currency = acnt_curr[sp_lst_acnt[i]]
                sp_acnt_type = acnt_type[sp_lst_acnt[i]]
 
