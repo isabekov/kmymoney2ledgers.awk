@@ -190,31 +190,46 @@ END {
                   }
                }
                if (f[x] ~ /<TAG/){
+                   g++
                    match(f[x], /id="([^"]+)"/, sp_tags_arr)
                    sp_lst_tags[c,g] = sp_tags_arr[1]
-                   #print "Tags[", c, ",", g, "]",  sp_lst_tags[c,g]
-                   g++
                }
                sp_slt_tag_cnt[c] = g
                x++
            }
 
            print "\n;", tr_id[1]
+
+           # Concatenate tags for a split
            for (i=1; i <= c; i++){
-               tags_concat = ""
+               tags_concat[i] = " "
                for (j=0; j <= sp_slt_tag_cnt[i]; j++){
-                   tags_concat = sprintf("%s %s", tags_concat, tags[sp_lst_tags[i,j]])
+                   if (tags[sp_lst_tags[i,j]] != ""){
+                       tags_concat[i] = sprintf("%s %s", tags_concat[i], tags[sp_lst_tags[i,j]]":")
+                   }
                }
-               print "Split", i, ", Tags: " tags_concat
+           }
+           # Transaction level tags are defined only for transactions with 2 splits, one of which is empty.
+           if (c==2){
+               if ((tags_concat[1] == " ") && (tags_concat[2] == " ")){
+                   txn_tags = ""
+               } else {
+                   # At least one split has tags
+                   if (tags_concat[1] == ""){
+                       txn_tags = tags_concat[2]
+                   } else {
+                       txn_tags = tags_concat[1]
+                   }
+                   txn_tags = sprintf(" Tags= %s", txn_tags)
+               }
+           } else {
+               txn_tags = ""
            }
            delete sp_lst_tags
-           printf("%s * \"%s\" ; %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1])
-
+           printf("%s * \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
 
            # Splits in a transaction
            for (i=1; i <= c; i++){
-
-
                sp_acnt_currency = acnt_curr[sp_lst_acnt[i]]
                sp_acnt_type = acnt_type[sp_lst_acnt[i]]
 
@@ -238,10 +253,27 @@ END {
                     printf( "    %s  %.4f %s @@ %.4f %s", acnt_full_name[sp_lst_acnt[i]], sp_lst_shares[i],
                             acnt_curr[sp_lst_acnt[i]], abs(sp_lst_val[i]), txn_commodity[1])
                 }
-                if (!sp_lst_memo[i]){
-                    printf("%s\n", sp_lst_memo[i])
+
+                if (c != 2){
+                    if (!sp_lst_memo[i]){
+                        if (tags_concat[i] != " "){
+                            printf("; Tags= %s\n", tags_concat[i])
+                        } else {
+                            printf("\n")
+                        }
+                    } else {
+                        if (tags_concat[i] != " "){
+                            printf("; %s;    Tags= %s\n", sp_lst_memo[i], tags_concat[i])
+                        } else {
+                            printf("; %s\n", sp_lst_memo[i])
+                        }
+                    }
                 } else {
-                    printf("  ; %s\n", sp_lst_memo[i])
+                    if (!sp_lst_memo[i]){
+                        printf("\n")
+                    } else {
+                        printf("  ; %s\n", sp_lst_memo[i])
+                    }
                 }
            }
        }

@@ -15,6 +15,7 @@ Supported features:
 - printing account opening information for beancount,
 - conversion of transactions for hledger/beancount (multiple splits are also supported),
 - printing currency conversion prices for hledger/beancount,
+- tags for hledger.
 
 ## Use
 
