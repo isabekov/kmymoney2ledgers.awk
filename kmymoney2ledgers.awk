@@ -135,9 +135,9 @@ END {
            t++
            # Logging to display progress in the standard error stream
            if ((t % 1000 == 0) || (t == 1) || (t == 10) || (t == 100) || (t == txn_cnt_tot)){
-               print "Processiong transaction", t, "out of", txn_cnt_tot > "/dev/stderr"
+               print "Processing transaction", t, "out of", txn_cnt_tot > "/dev/stderr"
            }
-           match(f[x], /id="([^"]+)"/, tr_id)
+           match(f[x], /id="([^"]+)"/, txn_id)
            match(f[x], /postdate="([^"]+)"/, post_date)
            # Date separator for hledger and beancount differ
            post_date_str = tub ? post_date[1] : gensub(/-/, "/", "g", post_date[1])
@@ -198,7 +198,7 @@ END {
                x++
            }
 
-           print "\n;", tr_id[1]
+           print "\n;", txn_id[1]
 
            # Concatenate tags for a split
            for (i=1; i <= c; i++){
