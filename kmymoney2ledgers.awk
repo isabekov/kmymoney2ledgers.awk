@@ -50,6 +50,16 @@ function use_currency_symbol_if_exists(currency){
     return currency
 }
 
+function escape_special_characters(str, to_escape_back_slash){
+    if (to_escape_back_slash){
+        # Four backslashes will be converted into one at the end, so '"' will be replaced by '\"'
+        str = gensub(/&quot;/, "\\\\\"", "g", str)
+    } else {
+        str = gensub(/&quot;/, "\"", "g", str)
+    }
+    return str
+}
+
 function abs(value){
     return (value < 0 ? -value : value)
 }
@@ -111,7 +121,7 @@ END {
        if (f[line] ~ /<PAYEE /) {
            match(f[line], /id="([^"]+)"/, pi_arr)
            match(f[line], /name="([^"]*)"/, py_arr)
-           payee[pi_arr[1]] = py_arr[1]
+           payee[pi_arr[1]] = escape_special_characters(py_arr[1], tub)
        }
        if (f[line] ~ /kmm-baseCurrency/) {
            match(f[line], /value="([^"]+)"/, base_curr_arr)
@@ -186,7 +196,7 @@ END {
                   sp_lst_acnt[c] = sp_acnt[1]
 
                   match(f[x], /memo="([^"]+)"/, sp_memo)
-                  sp_lst_memo[c] = sp_memo[1]
+                  sp_lst_memo[c] = escape_special_characters(sp_memo[1], 0)
 
                   match(f[x], /value="([^"]+)"/, val_arr)
                   if (length(val_arr) != 0){
@@ -255,7 +265,12 @@ END {
                txn_tags = ""
            }
            delete sp_lst_tags
-           printf("%s * \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+           if (tub) {
+               printf("%s * \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+           } else {
+               printf("%s * %s ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+           }
+
 
            # Splits in a transaction
            for (i=1; i <= c; i++){
