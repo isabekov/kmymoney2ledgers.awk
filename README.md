@@ -15,6 +15,7 @@ Supported features:
 - printing account opening information for beancount,
 - conversion of transactions for hledger/beancount (multiple splits are also supported),
 - printing currency conversion prices for hledger/beancount,
+- currency symbols (e.g. "$" instead of "USD") for hledger/beancount,
 - tags for hledger.
 
 ## Use
@@ -35,18 +36,20 @@ Help:
                               account commodity. No currency conversion is performed. Recommended option.
                               If value is 0 or flag is not specified, then use currency conversion specified
                               in the transaction split, i. e. how it is displayed in KMyMoney.
+        -v cse=value          If value is 1, then currency symbols are enabled (e.g. "$" instead of "USD").
+                              If value is 0 or flag is not specified, then currency symbols are not used.
 
 ## Examples
 
     # Beancount output:
-    awk -v rdac=1 -v tub=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].beancount
+    awk -v rdac=1 -v tub=1 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].beancount
 
     # Hledger output:
-    awk -v rdac=1 -v tub=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
-    awk -v rdac=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
+    awk -v rdac=1 -v tub=0 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
+    awk -v rdac=1 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 
-    # Default options: rdac=0, tub=0, so the following two commands will produce the same output:
-    awk -v rdac=0 -v tub=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
+    # Default options: rdac=0, tub=0, cse=0, so the following two commands will produce the same output:
+    awk -v rdac=0 -v tub=0 -v cse=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
     awk -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 
 ## Use cases
@@ -84,8 +87,8 @@ Help:
  a larger amount of US Dollars should be bought using the money in the base currency (EUR).
 
     cat Finances.kmy | gunzip > Finances.xml
-    awk -v rdac=1 -v tub=0 -f kmymoney2ledgers.awk Finances.xml > Finances.journal
-    hledger -f Finances.journal balance --flat -Y -b 2019 --change --depth 2 --invert -X EUR --infer-value Income Expense
+    awk -v rdac=1 -v tub=0 -v cse=1 -f kmymoney2ledgers.awk Finances.xml > Finances.journal
+    hledger -f Finances.journal balance --flat -Y -b 2019 --change --depth 2 --invert -X € --infer-value Income Expense
 
  Perform the same operation, but do not convert foreign currency expenses into the base currency. The food expenses in
  this case will be shown separately in EUR and USD.

@@ -13,17 +13,19 @@
 #                          account commodity. No currency conversion is performed. Recommended option.
 #                          If value is 0 or flag is not specified, then use currency conversion specified
 #                          in the transaction split, i. e. how it is displayed in KMyMoney.
+#    -v cse=value          If value is 1, then currency symbols are enabled (e.g. "$" instead of "USD").
+#                          If value is 0 or flag is not specified, then currency symbols are not used.
 
 # Examples:
 # Beancount output:
-# awk -v rdac=1 -v tub=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].beancount
+# awk -v rdac=1 -v tub=1 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].beancount
 
 # Hledger output:
-# awk -v rdac=1 -v tub=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
-# awk -v rdac=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
+# awk -v rdac=1 -v tub=0 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
+# awk -v rdac=1 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 
-# Default options: rdac=0, tub=0, so the following two commands will produce the same output:
-# awk -v rdac=0 -v tub=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
+# Default options: rdac=0, tub=0, cse=0, so the following two commands will produce the same output:
+# awk -v rdac=0 -v tub=0 -v cse=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 # awk -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 
 function traverse_account_hierarchy_backwards(child, tub){
@@ -41,6 +43,13 @@ function traverse_account_hierarchy_backwards(child, tub){
     }
 }
 
+function use_currency_symbol_if_exists(currency){
+    if (currency in CurrencyDict){
+        currency = CurrencyDict[currency]
+    }
+    return currency
+}
+
 function abs(value){
     return (value < 0 ? -value : value)
 }
@@ -54,11 +63,30 @@ BEGIN {
     Categories["12"] = "Income"
     Categories["13"] = "Expense"
 
+    CurrencyDict["EUR"] = "€"
+    CurrencyDict["TRL"] = "₺"
+    CurrencyDict["USD"] = "$"
+    CurrencyDict["CZK"] = "Kč"
+    CurrencyDict["HRK"] = "kn"
+    CurrencyDict["CRC"] = "₡"
+    CurrencyDict["OMR"] = "ر.ع."
+    CurrencyDict["HUF"] = "Ft"
+    CurrencyDict["PLN"] = "zł"
+    CurrencyDict["KZT"] = "₸"
+    CurrencyDict["KGS"] = "С"
+    CurrencyDict["GEL"] = "₾"
+    CurrencyDict["INR"] = "₹"
+    CurrencyDict["NGN"] = "₦"
+    CurrencyDict["GBP"] = "£"
+
     # Replace destination account currency flag
     rdac = (rdac == "") ? 0 : rdac
 
     # To use Beancount output or not
     tub = (tub == "") ? 0 : tub
+
+    # Currency symbols enabled or not
+    cse = (cse == "") ? 0 : cse
 }{
     # Main loop: read all lines into buffer
     f[i=1] = $0
@@ -141,7 +169,8 @@ END {
            match(f[x], /postdate="([^"]+)"/, post_date)
            # Date separator for hledger and beancount differ
            post_date_str = tub ? post_date[1] : gensub(/-/, "/", "g", post_date[1])
-           match(f[x], /commodity="([^"]+)"/, txn_commodity)
+           match(f[x], /commodity="([^"]+)"/, txn_commodity_arr)
+           txn_commodity = txn_commodity_arr[1]
 
            # Split counter. It should be reset to zero outside the while-loop.
 
@@ -232,8 +261,12 @@ END {
            for (i=1; i <= c; i++){
                sp_acnt_currency = acnt_curr[sp_lst_acnt[i]]
                sp_acnt_type = acnt_type[sp_lst_acnt[i]]
+               if (cse && (sp_acnt_currency in CurrencyDict)){
+                   sp_acnt_currency = use_currency_symbol_if_exists(sp_acnt_currency)
+                   txn_commodity = use_currency_symbol_if_exists(txn_commodity)
+               }
 
-               cond_1 = txn_commodity[1] == sp_acnt_currency
+               cond_1 = txn_commodity == sp_acnt_currency
                cond_2 = ((! cond_1) && rdac && (sp_acnt_type in Categories))
 
                 if (cond_1 || cond_2){
@@ -243,7 +276,7 @@ END {
                     #   a "money" account or an "expense category",
                     # * source is a "money" account and destination is an "expense category" and the flag
                     # "rdac" is set to true.
-                    printf("    %s  %.4f %s", acnt_full_name[sp_lst_acnt[i]], sp_lst_val[i], txn_commodity[1])
+                    printf("    %s  %.4f %s", acnt_full_name[sp_lst_acnt[i]], sp_lst_val[i], txn_commodity)
                 } else {
                     # Keep the destination account currency as it is specified in the KMyMoney transaction when:
                     # * source is a "money" account and destination is an "expense category" and it was specified in
@@ -251,7 +284,7 @@ END {
                     # * some amount of a foreign currency is bought, so conversion is necessary, since both source and
                     #   destination accounts are "money" accounts (inverse of cond_1).
                     printf( "    %s  %.4f %s @@ %.4f %s", acnt_full_name[sp_lst_acnt[i]], sp_lst_shares[i],
-                            acnt_curr[sp_lst_acnt[i]], abs(sp_lst_val[i]), txn_commodity[1])
+                            sp_acnt_currency, abs(sp_lst_val[i]), txn_commodity)
                 }
 
                 if (c != 2){
@@ -284,8 +317,16 @@ END {
        if (f[x] ~ /<PRICEPAIR /){
            match(f[x], /from="([^"]+)"/, price_from_arr)
            price_from = price_from_arr[1]
+           if (cse && (price_from in CurrencyDict)){
+               price_from = use_currency_symbol_if_exists(price_from)
+           }
+
            match(f[x], /to="([^"]+)"/, price_to_arr)
            price_to = price_to_arr[1]
+           if (cse && (price_to in CurrencyDict)){
+               price_to = use_currency_symbol_if_exists(price_to)
+           }
+
            printf("\n;==== %s to %s  =====\n", price_from, price_to)
            while(f[x] !~ /<\/PRICEPAIR/){
                if (f[x] ~ /<PRICE/){
