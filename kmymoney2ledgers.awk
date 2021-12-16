@@ -237,8 +237,6 @@ END {
                x++
            }
 
-           print "\n;", txn_id[1]
-
            # Concatenate tags for a split
            for (i=1; i <= c; i++){
                tags_concat[i] = " "
@@ -266,9 +264,10 @@ END {
            }
            delete sp_lst_tags
            if (tub) {
+               print "\n;", txn_id[1]
                printf("%s * \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
            } else {
-               printf("%s * %s ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+               printf("\n%s * (%s) %s ; %s%s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
            }
 
 
