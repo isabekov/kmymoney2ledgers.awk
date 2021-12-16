@@ -112,7 +112,7 @@ END {
            match(f[line], /opened="([^"]*)"/, od_arr)
            match(f[line], /currency="([^"]*)"/, cur_arr)
            match(f[line], /type="([^"]*)"/, type_arr)
-           acnt_name[id_arr[1]] = nm_arr[1]
+           acnt_name[id_arr[1]] = escape_special_characters(nm_arr[1], 0)
            acnt_prnt[id_arr[1]] = pa_arr[1]
            acnt_opdt[id_arr[1]] = od_arr[1]
            acnt_curr[id_arr[1]] = cur_arr[1]
