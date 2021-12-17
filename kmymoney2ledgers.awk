@@ -60,6 +60,23 @@ function escape_special_characters(str, to_escape_back_slash){
     return str
 }
 
+function has_new_line(str){
+    if (match(str, /&#xa;/)){
+        return 1
+    } else {
+        return 0
+    }
+}
+
+function memo_with_newline_to_multiple_lines_comment(str){
+    str = gensub(/^/, "; ", "g", str)
+    # CRLF -> \n
+    str = gensub(/&#xd;&#xa;/, "\n  ; ", "g", str)
+    # LF -> \n
+    str = gensub(/&#xa;/, "\n  ; ", "g", str)
+    return str
+}
+
 function abs(value){
     return (value < 0 ? -value : value)
 }
@@ -239,16 +256,22 @@ END {
 
            # Concatenate tags for a split
            for (i=1; i <= c; i++){
-               tags_concat[i] = " "
+               tags_concat[i] = ""
                for (j=0; j <= sp_slt_tag_cnt[i]; j++){
-                   if (tags[sp_lst_tags[i,j]] != ""){
-                       tags_concat[i] = sprintf("%s %s", tags_concat[i], tags[sp_lst_tags[i,j]]":")
+                   if (tags_concat[i] == ""){
+                       if (tags[sp_lst_tags[i,j]] != ""){
+                           tags_concat[i] = sprintf("%s:", tags[sp_lst_tags[i,j]])
+                       }
+                   } else {
+                       if (tags[sp_lst_tags[i,j]] != ""){
+                           tags_concat[i] = sprintf("%s, %s:", tags_concat[i], tags[sp_lst_tags[i,j]])
+                       }
                    }
                }
            }
            # Transaction level tags are defined only for transactions with 2 splits, one of which is empty.
            if (c==2){
-               if ((tags_concat[1] == " ") && (tags_concat[2] == " ")){
+               if ((tags_concat[1] == "") && (tags_concat[2] == "")){
                    txn_tags = ""
                } else {
                    # At least one split has tags
@@ -257,7 +280,7 @@ END {
                    } else {
                        txn_tags = tags_concat[1]
                    }
-                   txn_tags = sprintf(" Tags= %s", txn_tags)
+                   txn_tags = sprintf("Tags=%s", txn_tags)
                }
            } else {
                txn_tags = ""
@@ -267,7 +290,11 @@ END {
                print "\n;", txn_id[1]
                printf("%s * \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
            } else {
-               printf("\n%s * (%s) %s ; %s%s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+               if (txn_tags == ""){
+                   printf("\n%s * (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
+               } else {
+                   printf("\n%s * (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+               }
            }
 
 
@@ -301,25 +328,40 @@ END {
                             sp_acnt_currency, abs(sp_lst_val[i]), txn_commodity)
                 }
 
+                # If there are more than 2 splits, then tag should be at split level for hledger.
                 if (c != 2){
                     if (!sp_lst_memo[i]){
-                        if (tags_concat[i] != " "){
-                            printf("; Tags= %s\n", tags_concat[i])
+                        if (tags_concat[i] != ""){
+                            printf(" ; Tags=%s\n", tags_concat[i])
                         } else {
                             printf("\n")
                         }
                     } else {
-                        if (tags_concat[i] != " "){
-                            printf("; %s;    Tags= %s\n", sp_lst_memo[i], tags_concat[i])
+                        if (has_new_line(sp_lst_memo[i])){
+                            if (tags_concat[i] != ""){
+                                printf(" ; Tags=%s\n", tags_concat[i])
+                            } else {
+                                printf("\n")
+                            }
+                            printf("  %s\n", memo_with_newline_to_multiple_lines_comment(sp_lst_memo[i]))
                         } else {
-                            printf("; %s\n", sp_lst_memo[i])
+                            if (tags_concat[i] != ""){
+                                printf(" ; %s, Tags=%s\n", sp_lst_memo[i], tags_concat[i])
+                            } else {
+                                printf(" ; %s\n", sp_lst_memo[i])
+                            }
                         }
                     }
-                } else {
+                } else { # Tags are at transaction level are set above
                     if (!sp_lst_memo[i]){
                         printf("\n")
                     } else {
-                        printf("  ; %s\n", sp_lst_memo[i])
+                        if (has_new_line(sp_lst_memo[i])){
+                            #print sp_lst_memo[i], has_new_line(sp_lst_memo[i]) > "/dev/stderr"
+                            printf("\n  %s\n", memo_with_newline_to_multiple_lines_comment(sp_lst_memo[i]))
+                        } else {
+                            printf("; %s\n", sp_lst_memo[i])
+                        }
                     }
                 }
            }
