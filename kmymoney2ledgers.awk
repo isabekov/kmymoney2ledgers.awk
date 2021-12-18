@@ -61,8 +61,7 @@ function escape_special_characters(str, to_escape_back_slash){
 }
 
 function replace_double_space_with_single_space(str){
-    str = gensub(/  /, " ", "g", str)
-    return str
+    return gensub(/  /, " ", "g", str)
 }
 
 function has_new_line(str){
@@ -328,26 +327,20 @@ END {
 
                 # If there are more than 2 splits, then tag should be at split level for hledger.
                 if (c != 2){
-                    if (!sp_lst_memo[i]){
+                    if (!sp_lst_memo[i] || has_new_line(sp_lst_memo[i])){
                         if (tags_concat[i] != ""){
                             printf(" ; Tags=%s\n", tags_concat[i])
                         } else {
                             printf("\n")
                         }
-                    } else {
-                        if (has_new_line(sp_lst_memo[i])){
-                            if (tags_concat[i] != ""){
-                                printf(" ; Tags=%s\n", tags_concat[i])
-                            } else {
-                                printf("\n")
-                            }
-                            printf("  %s\n", memo_with_newline_to_multiple_lines_comment(sp_lst_memo[i]))
+                    }
+                    if (has_new_line(sp_lst_memo[i])){
+                        printf("  %s\n", memo_with_newline_to_multiple_lines_comment(sp_lst_memo[i]))
+                    } else if (sp_lst_memo[i] != "") {
+                        if (tags_concat[i] != ""){
+                            printf(" ; %s, Tags=%s\n", sp_lst_memo[i], tags_concat[i])
                         } else {
-                            if (tags_concat[i] != ""){
-                                printf(" ; %s, Tags=%s\n", sp_lst_memo[i], tags_concat[i])
-                            } else {
-                                printf(" ; %s\n", sp_lst_memo[i])
-                            }
+                            printf(" ; %s\n", sp_lst_memo[i])
                         }
                     }
                 } else { # Tags are at transaction level are set above
@@ -355,7 +348,6 @@ END {
                         printf("\n")
                     } else {
                         if (has_new_line(sp_lst_memo[i])){
-                            #print sp_lst_memo[i], has_new_line(sp_lst_memo[i]) > "/dev/stderr"
                             printf("\n  %s\n", memo_with_newline_to_multiple_lines_comment(sp_lst_memo[i]))
                         } else {
                             printf("; %s\n", sp_lst_memo[i])
