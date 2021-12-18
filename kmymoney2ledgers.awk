@@ -95,22 +95,6 @@ BEGIN {
     Categories["12"] = "Income"
     Categories["13"] = "Expense"
 
-    CurrencyDict["EUR"] = "€"
-    CurrencyDict["TRL"] = "₺"
-    CurrencyDict["USD"] = "$"
-    CurrencyDict["CZK"] = "Kč"
-    CurrencyDict["HRK"] = "kn"
-    CurrencyDict["CRC"] = "₡"
-    CurrencyDict["OMR"] = "ر.ع."
-    CurrencyDict["HUF"] = "Ft"
-    CurrencyDict["PLN"] = "zł"
-    CurrencyDict["KZT"] = "₸"
-    CurrencyDict["KGS"] = "С"
-    CurrencyDict["GEL"] = "₾"
-    CurrencyDict["INR"] = "₹"
-    CurrencyDict["NGN"] = "₦"
-    CurrencyDict["GBP"] = "£"
-
     # Replace destination account currency flag
     rdac = (rdac == "") ? 0 : rdac
 
@@ -150,6 +134,11 @@ END {
        if (f[line] ~ /kmm-baseCurrency/) {
            match(f[line], /value="([^"]+)"/, base_curr_arr)
            base_currency = base_curr_arr[1]
+       }
+       if (f[line] ~ /CURRENCY/){
+           match(f[line], /id="([^"]+)"/, curr_id_arr)
+           match(f[line], /symbol="([^"]*)"/, curr_sym_arr)
+           CurrencyDict[curr_id_arr[1]] = curr_sym_arr[1]
        }
        if (f[line] ~ /<TRANSACTIONS/) {
            match(f[line], /count="([^"]+)"/, txn_cnt_arr)
@@ -311,6 +300,8 @@ END {
                sp_acnt_type = acnt_type[sp_lst_acnt[i]]
                if (cse && (sp_acnt_currency in CurrencyDict)){
                    sp_acnt_currency = use_currency_symbol_if_exists(sp_acnt_currency)
+               }
+               if (cse && (txn_commodity in CurrencyDict)){
                    txn_commodity = use_currency_symbol_if_exists(txn_commodity)
                }
 
