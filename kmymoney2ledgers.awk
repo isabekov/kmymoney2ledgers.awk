@@ -81,6 +81,15 @@ function memo_with_newline_to_multiple_lines_comment(str){
     return str
 }
 
+function evaluate_fraction(val_arr){
+    split(val_arr[1], val, "/")
+    if (val[2] == 0){
+        return val[1]
+    } else{
+        return val[1] / val[2]
+    }
+}
+
 function abs(value){
     return (value < 0 ? -value : value)
 }
@@ -195,7 +204,6 @@ END {
            txn_commodity = txn_commodity_arr[1]
 
            # Split counter. It should be reset to zero outside the while-loop.
-
            c = 0
            while(f[x] !~ /<\/TRANSACTION/){ # Till the end of transaction definition.
                if (f[x] ~ /<SPLIT /){
@@ -210,34 +218,19 @@ END {
                   match(f[x], /memo="([^"]+)"/, sp_memo)
                   sp_lst_memo[c] = escape_special_characters(sp_memo[1], 0)
 
-                  match(f[x], /value="([^"]+)"/, val_arr)
-                  if (length(val_arr) != 0){
-                      split(val_arr[1], val, "/")
-                      if (val[2] == 0){
-                          sp_lst_val[c] = val[1]
-                      } else{
-                          sp_lst_val[c] = val[1] / val[2]
-                      }
+                  match(f[x], /value="([^"]+)"/, value_arr)
+                  if (length(value_arr) != 0){
+                      sp_lst_val[c] = evaluate_fraction(value_arr)
                   }
 
                   match(f[x], /shares="([^"]+)"/, shares_arr)
                   if (length(shares_arr) != 0){
-                      split(shares_arr[1], shares, "/")
-                      if (shares[2] == 0){
-                          sp_lst_shares[c] = shares[1]
-                      } else{
-                          sp_lst_shares[c] = shares[1] / shares[2]
-                      }
+                      sp_lst_shares[c] = evaluate_fraction(shares_arr)
                   }
 
                   match(f[x], /price="([^"]+)"/, price_arr)
                   if (length(price_arr) != 0){
-                      split(price_arr[1], price, "/")
-                      if (price[2] == 0){
-                          sp_lst_price[c] = price[1]
-                      } else{
-                          sp_lst_price[c] = price[1] / price[2]
-                      }
+                      sp_lst_price[c] = evaluate_fraction(price_arr)
                   }
                }
                if (f[x] ~ /<TAG/){
@@ -380,12 +373,7 @@ END {
                    price_date = price_date_arr[1]
                    match(f[x], /price="([^"]+)"/, price_arr)
                    if (length(price_arr) != 0){
-                       split(price_arr[1], price, "/")
-                       if (price[2] == 0){
-                           price_expr = price[1]
-                       } else{
-                           price_expr = price[1] / price[2]
-                       }
+                       price_expr = evaluate_fraction(price_arr)
                        if (tub){
                            printf("%s price %s %.4f %s\n", price_date, price_from, price_expr, price_to)
                        } else {
