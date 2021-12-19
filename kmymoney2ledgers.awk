@@ -103,6 +103,14 @@ BEGIN {
     Categories["12"] = "Income"
     Categories["13"] = "Expense"
 
+    ReconcilationDict[""] = ""
+    ReconcilationDict["-1"] = "" # unknown
+    ReconcilationDict["0"] = ""  # not reconciled
+    ReconcilationDict["1"] = "*" # cleared
+    ReconcilationDict["2"] = "!" # reconciled
+    ReconcilationDict["3"] = ""  # frozen
+
+
     # Replace destination account currency flag
     rdac = (rdac == "") ? 0 : rdac
 
@@ -215,6 +223,9 @@ END {
                   match(f[x], /account="([^"]+)"/, sp_acnt)
                   sp_lst_acnt[c] = sp_acnt[1]
 
+                  match(f[x], /reconcileflag="([^"]+)"/, sp_recon)
+                  sp_lst_recon[c] = ReconcilationDict[sp_recon[1]]
+
                   match(f[x], /memo="([^"]+)"/, sp_memo)
                   sp_lst_memo[c] = escape_special_characters(sp_memo[1], 0)
 
@@ -279,9 +290,9 @@ END {
                printf("%s * \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
            } else {
                if (txn_tags == ""){
-                   printf("\n%s * (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
+                   printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
                } else {
-                   printf("\n%s * (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                   printf("\n%s (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
                }
            }
 
@@ -307,14 +318,14 @@ END {
                     #   a "money" account or an "expense category",
                     # * source is a "money" account and destination is an "expense category" and the flag
                     # "rdac" is set to true.
-                    printf("    %s  %.4f %s", acnt_full_name[sp_lst_acnt[i]], sp_lst_val[i], txn_commodity)
+                    printf("  %s  %s  %.4f %s", sp_lst_recon[i], acnt_full_name[sp_lst_acnt[i]], sp_lst_val[i], txn_commodity)
                 } else {
                     # Keep the destination account currency as it is specified in the KMyMoney transaction when:
                     # * source is a "money" account and destination is an "expense category" and it was specified in
                     #   the input argument and the flag "rdac" (replace destination account currency) is set to false,
                     # * some amount of a foreign currency is bought, so conversion is necessary, since both source and
                     #   destination accounts are "money" accounts (inverse of cond_1).
-                    printf( "    %s  %.4f %s @@ %.4f %s", acnt_full_name[sp_lst_acnt[i]], sp_lst_shares[i],
+                    printf( "  %s  %s  %.4f %s @@ %.4f %s", sp_lst_recon[i], acnt_full_name[sp_lst_acnt[i]], sp_lst_shares[i],
                             sp_acnt_currency, abs(sp_lst_val[i]), txn_commodity)
                 }
 
