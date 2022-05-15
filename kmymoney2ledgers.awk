@@ -194,7 +194,7 @@ END {
            # Increment transaction counter
            t++
            # Logging to display progress in the standard error stream
-           if ((t % 1000 == 0) || (t == 1) || (t == 10) || (t == 100) || (t == txn_cnt_tot)){
+           if ((t == 1) || (t == 10) || (t == 100) || ((t < 1001) && (t % 1000 == 0)) || (t % 10000 == 0)  || (t == txn_cnt_tot)){
                print "Processing transaction", t, "out of", txn_cnt_tot > "/dev/stderr"
            }
            match(f[x], /id="([^"]+)"/, txn_id)
