@@ -58,6 +58,7 @@ function escape_special_characters(str, to_escape_back_slash){
         str = gensub(/&quot;/, "\"", "g", str)
     }
     str = gensub(/&amp;/, "\\&", "g", str)
+    str = gensub(/&lt;/, "<", "g", str)
     return str
 }
 
