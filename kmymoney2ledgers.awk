@@ -174,7 +174,9 @@ END {
    if (tub){
        print "option \"title\" \"Personal Finances\""
        printf("option \"operating_currency\" \"%s\"\n", base_currency)
-       printf("plugin \"beancount.plugins.implicit_prices\"\n\n")
+       printf("plugin \"beancount.plugins.implicit_prices\"\n")
+       printf("1900-01-01 custom \"fava-option\" \"show-accounts-with-zero-balance\" \"false\"\n")
+       printf("1900-01-01 custom \"fava-option\" \"invert-income-liabilities-equity\" \"true\"\n\n")
    }
 
    # Opening dates of accounts for Beancount output
