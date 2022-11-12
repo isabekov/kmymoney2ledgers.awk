@@ -59,6 +59,10 @@ function escape_special_characters(str, to_escape_back_slash){
     }
     str = gensub(/&amp;/, "\\&", "g", str)
     str = gensub(/&lt;/, "<", "g", str)
+    # Replace HTML-encoded tab with two whitespaces
+    str = gensub(/&#x9;/, "  ", "g", str)
+    # Replace HTML-encoded carriage return with two whitespaces
+    str = gensub(/&#13;/, "  ", "g", str)
     return str
 }
 
