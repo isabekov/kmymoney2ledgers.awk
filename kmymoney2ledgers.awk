@@ -236,6 +236,11 @@ END {
                       sp_lst_shares[c] = evaluate_fraction(shares_arr)
                   }
 
+                  match(f[x], /reconcileflag="([^"]+)"/, reconcileflag_arr)
+                  if (length(reconcileflag_arr) != 0){
+                      sp_lst_reconcileflag[c] = reconcileflag_arr[1]
+                  }
+
                   match(f[x], /price="([^"]+)"/, price_arr)
                   if (length(price_arr) != 0){
                       sp_lst_price[c] = evaluate_fraction(price_arr)
@@ -284,12 +289,12 @@ END {
            delete sp_lst_tags
            if (tub) {
                print "\n;", txn_id[1]
-               printf("%s * \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+               printf("%s txn \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
            } else {
                if (txn_tags == ""){
-                   printf("\n%s * (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
+                   printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
                } else {
-                   printf("\n%s * (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                   printf("\n%s (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
                }
            }
 
@@ -308,6 +313,9 @@ END {
                cond_1 = txn_commodity == sp_acnt_currency
                cond_2 = ((! cond_1) && rdac && (sp_acnt_type in Categories))
 
+               # Reconcilation flag: "*" - cleared (1), "!" - pending/incomplete (0)
+               status = sp_lst_reconcileflag[i] == 1 ? "*" : "!"
+
                 if (cond_1 || cond_2){
                     # Destination account currency is replaced with source account currency and the destination amount
                     # is set to the negated source amount when:
@@ -315,14 +323,14 @@ END {
                     #   a "money" account or an "expense category",
                     # * source is a "money" account and destination is an "expense category" and the flag
                     # "rdac" is set to true.
-                    printf("    %s  %.4f %s", acnt_full_name[sp_lst_acnt[i]], sp_lst_val[i], txn_commodity)
+                    printf("    %s %s  %.4f %s", status, acnt_full_name[sp_lst_acnt[i]], sp_lst_val[i], txn_commodity)
                 } else {
                     # Keep the destination account currency as it is specified in the KMyMoney transaction when:
                     # * source is a "money" account and destination is an "expense category" and it was specified in
                     #   the input argument and the flag "rdac" (replace destination account currency) is set to false,
                     # * some amount of a foreign currency is bought, so conversion is necessary, since both source and
                     #   destination accounts are "money" accounts (inverse of cond_1).
-                    printf( "    %s  %.4f %s @@ %.4f %s", acnt_full_name[sp_lst_acnt[i]], sp_lst_shares[i],
+                    printf( "    %s %s  %.4f %s @@ %.4f %s", status, acnt_full_name[sp_lst_acnt[i]], sp_lst_shares[i],
                             sp_acnt_currency, abs(sp_lst_val[i]), txn_commodity)
                 }
 
