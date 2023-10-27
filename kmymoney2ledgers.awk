@@ -159,13 +159,16 @@ END {
            txn_cnt_tot = txn_cnt_arr[1]
        }
        if (f[line] ~ /<TAGS/){
-           while (f[line] !~/<\/TAGS/){
-               if (f[line] ~/<TAG /){
-                   match(f[line], /id="([^"]+)"/, tags_id_arr)
-                   match(f[line], /name="([^"]+)"/, tags_name_arr)
-                   tags[tags_id_arr[1]] = tags_name_arr[1]
+           match(f[line], /count="([^"]+)"/, tags_cnt_arr)
+           if (tags_cnt_arr[1] > 0){
+               while (f[line] !~/<\/TAGS/){
+                   if (f[line] ~/<TAG /){
+                       match(f[line], /id="([^"]+)"/, tags_id_arr)
+                       match(f[line], /name="([^"]+)"/, tags_name_arr)
+                       tags[tags_id_arr[1]] = tags_name_arr[1]
+                   }
+                   line++
                }
-               line++
            }
        }
    }
@@ -258,14 +261,16 @@ END {
            # Concatenate tags for a split
            for (i=1; i <= c; i++){
                tags_concat[i] = ""
-               for (j=0; j <= sp_slt_tag_cnt[i]; j++){
-                   if (tags_concat[i] == ""){
-                       if (tags[sp_lst_tags[i,j]] != ""){
-                           tags_concat[i] = sprintf("%s:", tags[sp_lst_tags[i,j]])
-                       }
-                   } else {
-                       if (tags[sp_lst_tags[i,j]] != ""){
-                           tags_concat[i] = sprintf("%s, %s:", tags_concat[i], tags[sp_lst_tags[i,j]])
+               if (sp_slt_tag_cnt[i] > 0){
+                   for (j=0; j <= sp_slt_tag_cnt[i]; j++){
+                       if (tags_concat[i] == ""){
+                           if (tags[sp_lst_tags[i,j]] != ""){
+                               tags_concat[i] = sprintf("%s:", tags[sp_lst_tags[i,j]])
+                           }
+                       } else {
+                           if (tags[sp_lst_tags[i,j]] != ""){
+                               tags_concat[i] = sprintf("%s, %s:", tags_concat[i], tags[sp_lst_tags[i,j]])
+                           }
                        }
                    }
                }
@@ -289,7 +294,7 @@ END {
            delete sp_lst_tags
            if (tub) {
                print "\n;", txn_id[1]
-               printf("%s txn \"%s\" ; %s%s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+               printf("%s txn \"%s\" ; %s %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
            } else {
                if (txn_tags == ""){
                    printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
