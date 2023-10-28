@@ -7,7 +7,7 @@
 # Usage:
 # awk -v rdac=[value] -v tub=[value] -f kmymoney2ledgers.awk [inputfile].xml > [output].[extension]
 # Input flags:
-#    -v tub=value          If value is 1, then use beancount journal output format.
+#    -v tub=value          If value is 1, then use Beancount journal output format.
 #                          If value is 0 or flag is not specified, then output format is hledger journal.
 #    -v rdac=value         If value is 1, then replace destination account commodity (currency) with source
 #                          account commodity. No currency conversion is performed. Recommended option.
@@ -92,30 +92,7 @@ function abs(value){
     return (value < 0 ? -value : value)
 }
 
-
-BEGIN {
-    AccountRenaming["Asset"] = "Assets"
-    AccountRenaming["Liability"] = "Liabilities"
-    AccountRenaming["Expense"] = "Expenses"
-
-    Categories["12"] = "Income"
-    Categories["13"] = "Expense"
-
-    # Replace destination account currency flag
-    rdac = (rdac == "") ? 0 : rdac
-
-    # To use Beancount output or not
-    tub = (tub == "") ? 0 : tub
-
-    # Currency symbols enabled or not
-    cse = (cse == "") ? 0 : cse
-}{
-    # Main loop: read all lines into buffer
-    f[i=1] = $0
-    while (getline)
-        f[++i] = $0
-}
-END {
+function parse_dictionaries(){
    for (line in f) {
        if (f[line] ~ /<ACCOUNT /) {
            match(f[line], /id="([^"]+)"/, id_arr)
@@ -164,29 +141,35 @@ END {
            }
        }
    }
+}
 
-   # Header for Beancount output
-   if (tub){
-       print "option \"title\" \"Personal Finances\""
-       printf("option \"operating_currency\" \"%s\"\n", base_currency)
-       printf("plugin \"beancount.plugins.implicit_prices\"\n")
-       printf("1900-01-01 custom \"fava-option\" \"show-accounts-with-zero-balance\" \"false\"\n")
-       printf("1900-01-01 custom \"fava-option\" \"invert-income-liabilities-equity\" \"true\"\n\n")
-   }
-
-   # Opening dates of accounts for Beancount output
+function parse_account_full_names(){
    for (id in acnt_name){
        acnt_full_name[id] = traverse_account_hierarchy_backwards(id, tub)
-       if (tub){
-           open_dt = (acnt_opdt[id] == "") ? "1900-01-01" : acnt_opdt[id]
-
-           # Do not display parent account (i.e. accounts without ":" character in the name)
-           if (match(acnt_full_name[id], /:/))
-               printf "%s\n", open_dt " open " acnt_full_name[id] " ;" id
-       }
    }
+}
 
-   # Transactions
+function add_account_opening_dates(){
+    for (id in acnt_name){
+        # Opening dates of accounts for Beancount output
+        open_dt = (acnt_opdt[id] == "") ? "1900-01-01" : acnt_opdt[id]
+
+        # Do not display parent account (i.e. accounts without ":" character in the name)
+        if (match(acnt_full_name[id], /:/))
+            printf "%s\n", open_dt " open " acnt_full_name[id] " ;" id
+    }
+}
+
+function beancount_specific_header(){
+    print "option \"title\" \"Personal Finances\""
+    printf("option \"operating_currency\" \"%s\"\n", base_currency)
+    printf("plugin \"beancount.plugins.implicit_prices\"\n")
+    printf("1900-01-01 custom \"fava-option\" \"show-accounts-with-zero-balance\" \"false\"\n")
+    printf("1900-01-01 custom \"fava-option\" \"invert-income-liabilities-equity\" \"true\"\n\n")
+}
+
+function parse_transactions(){
+   # Transaction counter
    t = 0
    # Scheduled transactions flag (do not convert them)
    st_flag = 0
@@ -206,7 +189,7 @@ END {
            }
            match(f[x], /id="([^"]+)"/, txn_id)
            match(f[x], /postdate="([^"]+)"/, post_date)
-           # Date separator for hledger and beancount differ
+           # Date separator for HLedger and Beancount differ
            post_date_str = tub ? post_date[1] : gensub(/-/, "/", "g", post_date[1])
            match(f[x], /commodity="([^"]+)"/, txn_commodity_arr)
            txn_commodity = txn_commodity_arr[1]
@@ -375,8 +358,9 @@ END {
            }
        }
    }
+}
 
-   # Prices of currencies
+function parse_currency_prices(){
    for (x in f){
        if (f[x] ~ /<PRICEPAIR /){
            match(f[x], /from="([^"]+)"/, price_from_arr)
@@ -410,4 +394,40 @@ END {
            }
        }
    }
+}
+
+BEGIN {
+    AccountRenaming["Asset"] = "Assets"
+    AccountRenaming["Liability"] = "Liabilities"
+    AccountRenaming["Expense"] = "Expenses"
+
+    Categories["12"] = "Income"
+    Categories["13"] = "Expense"
+
+    # Replace destination account currency flag
+    rdac = (rdac == "") ? 0 : rdac
+
+    # To use Beancount output or not
+    tub = (tub == "") ? 0 : tub
+
+    # Currency symbols enabled or not
+    cse = (cse == "") ? 0 : cse
+}{
+    # Main loop: read all lines into buffer
+    f[i=1] = $0
+    while (getline)
+        f[++i] = $0
+}
+END {
+   parse_dictionaries()
+   parse_account_full_names()
+
+   # Beancount specific processing
+   if (tub){
+       beancount_specific_header()
+       add_account_opening_dates()
+   }
+
+   parse_transactions()
+   parse_currency_prices()
 }
