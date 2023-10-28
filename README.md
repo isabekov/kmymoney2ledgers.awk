@@ -14,6 +14,7 @@ it allows multicurrency categories ("expenses" and "income") and can handle curr
 Supported features:
 - printing account opening information for beancount,
 - conversion of transactions for hledger/beancount (multiple splits are also supported),
+- transaction/split status ("*" - completed/cleared, "!" - pending),
 - printing currency conversion prices for hledger/beancount,
 - currency symbols (e.g. "$" instead of "USD") for hledger/beancount,
 - tags for hledger/beancount (for beancount tags at split level are commented out since it does support only tags at transaction level).
