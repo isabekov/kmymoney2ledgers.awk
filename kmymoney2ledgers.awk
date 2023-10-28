@@ -71,11 +71,7 @@ function replace_double_space_with_single_space(str){
 }
 
 function has_new_line(str){
-    if (match(str, /&#xa;/)){
-        return 1
-    } else {
-        return 0
-    }
+    return match(str, /&#xa;/) ? 1 : 0
 }
 
 function memo_with_newline_to_multiple_lines_comment(str){
@@ -89,11 +85,7 @@ function memo_with_newline_to_multiple_lines_comment(str){
 
 function evaluate_fraction(val_arr){
     split(val_arr[1], val, "/")
-    if (val[2] == 0){
-        return val[1]
-    } else{
-        return val[1] / val[2]
-    }
+    return (val[2] == 0) ? val[1] : val[1] / val[2]
 }
 
 function abs(value){
@@ -186,10 +178,7 @@ END {
    for (id in acnt_name){
        acnt_full_name[id] = traverse_account_hierarchy_backwards(id, tub)
        if (tub){
-           if (acnt_opdt[id] == "")
-               open_dt = "1900-01-01"
-           else
-               open_dt = acnt_opdt[id]
+           open_dt = (acnt_opdt[id] == "") ? "1900-01-01" : acnt_opdt[id]
 
            # Do not display parent account (i.e. accounts without ":" character in the name)
            if (match(acnt_full_name[id], /:/))
@@ -283,11 +272,7 @@ END {
                    txn_tags = ""
                } else {
                    # At least one split has tags
-                   if (tags_concat[1] == ""){
-                       txn_tags = tags_concat[2]
-                   } else {
-                       txn_tags = tags_concat[1]
-                   }
+                   txn_tags = (tags_concat[1] == "") ? tags_concat[2] : tags_concat[1]
                    fmt_tags_str = tub ? "%s" : "Tags=%s"
                    txn_tags = sprintf(fmt_tags_str, txn_tags)
                }
