@@ -16,7 +16,7 @@ Supported features:
 - conversion of transactions for hledger/beancount (multiple splits are also supported),
 - printing currency conversion prices for hledger/beancount,
 - currency symbols (e.g. "$" instead of "USD") for hledger/beancount,
-- tags for hledger.
+- tags for hledger/beancount (for beancount tags at split level are commented out since it does support only tags at transaction level).
 
 ## Use
 
