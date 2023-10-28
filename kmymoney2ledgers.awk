@@ -188,8 +188,16 @@ END {
 
    # Transactions
    t = 0
+   # Scheduled transactions flag (do not convert them)
+   st_flag = 0
    for (x in f) {
-       if (f[x] ~ /<TRANSACTION /){
+       if (f[x] ~ /<SCHEDULED_TX/){
+           st_flag = 1
+       }
+       if (f[x] ~ /<\/SCHEDULED_TX/){
+           st_flag = 0
+       }
+       if ((f[x] ~ /<TRANSACTION /) && (st_flag == 0)){
            # Increment transaction counter
            t++
            # Logging to display progress in the standard error stream
