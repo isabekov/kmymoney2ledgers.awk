@@ -265,19 +265,13 @@ END {
                    for (j=0; j <= sp_slt_tag_cnt[i]; j++){
                        if (tags_concat[i] == ""){
                            if (tags[sp_lst_tags[i,j]] != ""){
-                               if (tub){
-                                   tags_concat[i] = sprintf("#%s", tags[sp_lst_tags[i,j]])
-                               } else {
-                                   tags_concat[i] = sprintf("%s:", tags[sp_lst_tags[i,j]])
-                               }
+                               fmt_tags_str = tub ? "#%s" : "%s:"
+                               tags_concat[i] = sprintf(fmt_tags_str, tags[sp_lst_tags[i,j]])
                            }
                        } else {
                            if (tags[sp_lst_tags[i,j]] != ""){
-                               if (tub){
-                                   tags_concat[i] = sprintf("%s #%s", tags_concat[i], tags[sp_lst_tags[i,j]])
-                               } else {
-                                   tags_concat[i] = sprintf("%s, %s:", tags_concat[i], tags[sp_lst_tags[i,j]])
-                               }
+                               fmt_tags_str = tub ? "%s #%s" : "%s, %s:"
+                               tags_concat[i] = sprintf(fmt_tags_str, tags_concat[i], tags[sp_lst_tags[i,j]])
                            }
                        }
                    }
@@ -294,11 +288,8 @@ END {
                    } else {
                        txn_tags = tags_concat[1]
                    }
-                   if (tub){
-                       txn_tags = sprintf("%s", txn_tags)
-                   } else {
-                       txn_tags = sprintf("Tags=%s", txn_tags)
-                   }
+                   fmt_tags_str = tub ? "%s" : "Tags=%s"
+                   txn_tags = sprintf(fmt_tags_str, txn_tags)
                }
            } else {
                txn_tags = ""
@@ -359,12 +350,9 @@ END {
                 if (c != 2){
                     if (!sp_lst_memo[i] || has_new_line(sp_lst_memo[i])){
                         if (tags_concat[i] != ""){
-                            if (tub) {
-                                # Tags in Beancount cannot be at split level! Commenting them out.
-                                printf(" ; %s\n", tags_concat[i])
-                            } else {
-                                printf(" ; Tags=%s\n", tags_concat[i])
-                            }
+                            # Tags in Beancount cannot be at split level! Commenting them out.
+                            fmt_tags_str = tub ? " ; %s\n" : " ; Tags=%s\n"
+                            printf(fmt_tags_str, tags_concat[i])
                         } else {
                             printf("\n")
                         }
@@ -373,12 +361,9 @@ END {
                         printf("  %s\n", memo_with_newline_to_multiple_lines_comment(sp_lst_memo[i]))
                     } else if (sp_lst_memo[i] != "") {
                         if (tags_concat[i] != ""){
-                            if (tub) {
-                                # Tags in Beancount cannot be at split level! Commenting them out.
-                                printf(" ; %s %s\n", sp_lst_memo[i], tags_concat[i])
-                            } else {
-                                printf(" ; %s, Tags=%s\n", sp_lst_memo[i], tags_concat[i])
-                            }
+                            # Tags in Beancount cannot be at split level! Commenting them out.
+                            fmt_tags_str = tub ? " ; %s %s\n" : " ; %s, Tags=%s\n"
+                            printf(fmt_tags_str, sp_lst_memo[i], tags_concat[i])
                         } else {
                             printf(" ; %s\n", sp_lst_memo[i])
                         }
