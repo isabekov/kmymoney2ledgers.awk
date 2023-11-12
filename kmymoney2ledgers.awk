@@ -274,15 +274,31 @@ function parse_transactions(){
            if (tub) {
                print "\n;", txn_id[1]
                if (txn_tags == ""){
-                   printf("%s txn \"%s\" ; %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1])
+                   if (tpp) {
+                       printf("%s txn \"%s\" ; %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1])
+                   } else {
+                       printf("%s txn \"%s\"\n", post_date_str, payee[sp_lst_payee[1]])
+                   }
                } else {
-                   printf("%s txn \"%s\" %s ; %s\n", post_date_str, payee[sp_lst_payee[1]], txn_tags, sp_lst_payee[1])
+                   if (tpp) {
+                       printf("%s txn \"%s\" %s ; %s\n", post_date_str, payee[sp_lst_payee[1]], txn_tags, sp_lst_payee[1])
+                   } else {
+                       printf("%s txn \"%s\" %s\n", post_date_str, payee[sp_lst_payee[1]], txn_tags)
+                   }
                }
            } else {
                if (txn_tags == ""){
-                   printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
+                   if (tpp) {
+                       printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
+                   } else {
+                       printf("\n%s (%s) %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]])
+                   }
                } else {
-                   printf("\n%s (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                   if (tpp) {
+                       printf("\n%s (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                   } else {
+                       printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], txn_tags)
+                   }
                }
            }
 
@@ -412,6 +428,9 @@ BEGIN {
 
     # Currency symbols enabled or not
     cse = (cse == "") ? 0 : cse
+
+    # To print payee ID
+    tpp = (tpp == "") ? 0 : tpp
 }{
     # Main loop: read all lines into buffer
     f[i=1] = $0

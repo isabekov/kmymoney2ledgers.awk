@@ -39,6 +39,8 @@ Help:
                               in the transaction split, i. e. how it is displayed in KMyMoney.
         -v cse=value          If value is 1, then currency symbols are enabled (e.g. "$" instead of "USD").
                               If value is 0 or flag is not specified, then currency symbols are not used.
+        -v tpp=value          If value is 1, then print payee ID in a comment.
+                              If value is 0 or flag is not specified, then do not print payee ID in a comment.
 
 ## Examples
 
