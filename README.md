@@ -41,6 +41,8 @@ Help:
                               If value is 0 or flag is not specified, then currency symbols are not used.
         -v tpp=value          If value is 1, then print payee ID in a comment.
                               If value is 0 or flag is not specified, then do not print payee ID in a comment.
+        -v tpt=value          If value is 1, then print transaction ID either in comment or after date.
+                              If value is 0 or flag is not specified, then do not print transaction ID.
 
 ## Examples
 
@@ -51,8 +53,8 @@ Help:
     awk -v rdac=1 -v tub=0 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
     awk -v rdac=1 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 
-    # Default options: rdac=0, tub=0, cse=0, so the following two commands will produce the same output:
-    awk -v rdac=0 -v tub=0 -v cse=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
+    # Default options: rdac=0, tub=0, cse=0, tpp=0, tpt=0 so the following two commands will produce the same output:
+    awk -v rdac=0 -v tub=0 -v cse=0 -v tpp=0 -v tpt=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
     awk -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 
 ## Use cases

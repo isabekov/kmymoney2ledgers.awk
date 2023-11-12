@@ -15,6 +15,10 @@
 #                          in the transaction split, i. e. how it is displayed in KMyMoney.
 #    -v cse=value          If value is 1, then currency symbols are enabled (e.g. "$" instead of "USD").
 #                          If value is 0 or flag is not specified, then currency symbols are not used.
+#    -v tpp=value          If value is 1, then print payee ID in a comment.
+#                          If value is 0 or flag is not specified, then do not print payee ID in a comment.
+#    -v tpt=value          If value is 1, then print transaction ID either in comment or after date.
+#                          If value is 0 or flag is not specified, then do not print transaction ID.
 
 # Examples:
 # Beancount output:
@@ -24,8 +28,8 @@
 # awk -v rdac=1 -v tub=0 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 # awk -v rdac=1 -v cse=1 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 
-# Default options: rdac=0, tub=0, cse=0, so the following two commands will produce the same output:
-# awk -v rdac=0 -v tub=0 -v cse=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
+# Default options: rdac=0, tub=0, cse=0, tpp=0, tpt=0 so the following two commands will produce the same output:
+# awk -v rdac=0 -v tub=0 -v cse=0 -v tpp=0 -v tpt=0 -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 # awk -f kmymoney2ledgers.awk [inputfile].xml > [output].journal
 
 function traverse_account_hierarchy_backwards(child, tub){
@@ -272,7 +276,12 @@ function parse_transactions(){
            }
            delete sp_lst_tags
            if (tub) {
-               print "\n;", txn_id[1]
+               if (tpt) {
+                   print "\n;", txn_id[1]
+               } else {
+                   print "\n"
+               }
+
                if (txn_tags == ""){
                    if (tpp) {
                        printf("%s txn \"%s\" ; %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1])
@@ -289,15 +298,31 @@ function parse_transactions(){
            } else {
                if (txn_tags == ""){
                    if (tpp) {
-                       printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
+                       if (tpt) {
+                           printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
+                       } else {
+                           printf("\n%s (:) %s ; %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1])
+                       }
                    } else {
-                       printf("\n%s (%s) %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]])
+                       if (tpt) {
+                           printf("\n%s (%s) %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]])
+                       } else {
+                           printf("\n%s (:) %s\n", post_date_str, payee[sp_lst_payee[1]])
+                       }
                    }
                } else {
                    if (tpp) {
-                       printf("\n%s (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                       if (tpt) {
+                           printf("\n%s (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                       } else {
+                           printf("\n%s (:) %s ; %s, %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                       }
                    } else {
-                       printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], txn_tags)
+                       if (tpt) {
+                           printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], txn_tags)
+                       } else {
+                           printf("\n%s (:) %s ; %s\n", post_date_str, payee[sp_lst_payee[1]], txn_tags)
+                       }
                    }
                }
            }
@@ -431,6 +456,9 @@ BEGIN {
 
     # To print payee ID
     tpp = (tpp == "") ? 0 : tpp
+
+    # To print transaction ID
+    tpt = (tpt == "") ? 0 : tpt
 }{
     # Main loop: read all lines into buffer
     f[i=1] = $0
