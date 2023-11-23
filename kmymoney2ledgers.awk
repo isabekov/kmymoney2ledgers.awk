@@ -386,7 +386,7 @@ function parse_transactions(){
                         }
                     }
                 } else { # Tags at transaction level are set above
-                    if (!sp_lst_memo[i]){
+                    if (!sp_lst_memo[i] || (i == 1)){
                         printf("\n")
                     } else {
                         if (has_new_line(sp_lst_memo[i])){
