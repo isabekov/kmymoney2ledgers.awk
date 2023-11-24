@@ -98,7 +98,7 @@ function abs(value){
 
 function parse_dictionaries(){
    for (line in f) {
-       if (f[line] ~ /<ACCOUNT /) {
+       if (f[line] ~ /<ACCOUNT .*opened.*/) {
            match(f[line], /id="([^"]+)"/, id_arr)
            match(f[line], /name="([^"]*)"/, nm_arr)
            match(f[line], /parentaccount="([^"]*)"/, pa_arr)
