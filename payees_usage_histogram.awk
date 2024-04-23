@@ -9,6 +9,57 @@ function escape_special_characters(str, to_escape_back_slash){
     return str
 }
 
+function replace_double_space_with_single_space(str){
+    return gensub(/  /, " ", "g", str)
+}
+
+function traverse_account_hierarchy_backwards(child, tub){
+    if (acnt_prnt[child] == ""){
+        if (acnt_name[child] in AccountRenaming){
+            name = AccountRenaming[acnt_name[child]]
+        } else {
+            name = tub ? gensub(/[[:punct:] ]/, "-", "g", acnt_name[child]) : acnt_name[child]
+        }
+        return tub ? gensub(/[[:punct:] ]/, "-", "g", name): name
+    } else {
+        parent_acnt_name = traverse_account_hierarchy_backwards(acnt_prnt[child], tub)
+        name = tub ? gensub(/[[:punct:] ]/, "-", "g", acnt_name[child]) : acnt_name[child]
+        return parent_acnt_name ":" name
+    }
+}
+
+function parse_account_full_names(){
+   for (id in acnt_name){
+       acnt_full_name[id] = traverse_account_hierarchy_backwards(id, tub)
+   }
+}
+
+function parse_dictionaries(){
+   for (line in f) {
+       if (f[line] ~ /<ACCOUNT .*opened.*/) {
+           match(f[line], /id="([^"]+)"/, id_arr)
+           match(f[line], /name="([^"]*)"/, nm_arr)
+           match(f[line], /parentaccount="([^"]*)"/, pa_arr)
+           match(f[line], /opened="([^"]*)"/, od_arr)
+           match(f[line], /currency="([^"]*)"/, cur_arr)
+           match(f[line], /type="([^"]*)"/, type_arr)
+           # Double space in account name is not allowed
+           acnt_name[id_arr[1]] = replace_double_space_with_single_space(nm_arr[1])
+           acnt_name[id_arr[1]] = escape_special_characters(acnt_name[id_arr[1]], 0)
+           acnt_prnt[id_arr[1]] = pa_arr[1]
+           acnt_opdt[id_arr[1]] = od_arr[1]
+           acnt_curr[id_arr[1]] = cur_arr[1]
+           acnt_type[id_arr[1]] = type_arr[1]
+       }
+       if (f[line] ~ /<PAYEE /) {
+           match(f[line], /id="([^"]+)"/, pi_arr)
+           match(f[line], /name="([^"]*)"/, py_arr)
+           payee[pi_arr[1]] = escape_special_characters(py_arr[1], tub)
+       }
+   }
+}
+
+
 BEGIN {
     PROCINFO["sorted_in"] = "@val_num_desc"
     AccountRenaming["Asset"] = "Assets"
@@ -24,13 +75,8 @@ BEGIN {
         f[++i] = $0
 }
 END {
-    for (line in f) {
-     if (f[line] ~ /<PAYEE /) {
-         match(f[line], /id="([^"]+)"/, pi_arr)
-         match(f[line], /name="([^"]*)"/, py_arr)
-         payee[pi_arr[1]] = escape_special_characters(py_arr[1])
-     }
-    }
+    parse_dictionaries()
+    parse_account_full_names()
 
     for (pid in payee){
         payee_cnt[pid] = 0
@@ -71,8 +117,8 @@ END {
        }
    }
 
-   print("Payee: Count -> Name")
+   print("Payee|Count|Name")
    for (pid in payee_cnt){
-       printf("%s: %i -> %s\n", pid, payee_cnt[pid], payee[pid])
+       printf("%s|%i|%s\n", pid, payee_cnt[pid], payee[pid])
    }
 }
