@@ -78,9 +78,6 @@ END {
     parse_dictionaries()
     parse_account_full_names()
 
-    for (pid in payee){
-        payee_cnt[pid] = 0
-    }
    # Transaction counter
    t = 0
    # Scheduled transactions flag (do not convert them)
@@ -97,28 +94,24 @@ END {
            t++
            # Split counter. It should be reset to zero outside the while-loop.
            c = 0
-           delete payee_cnt_at_txn
            while(f[x] !~ /<\/TRANSACTION/){ # Till the end of transaction definition.
                if (f[x] ~ /<SPLIT /){
                   g = 0
                   ++c
+                  match(f[x], /account="([^"]+)"/, sp_acnt)
+
                   match(f[x], /payee="([^"]+)"/, sp_payee)
-                  payee_cnt_at_txn[sp_payee[1]] +=1
+                  payee_cnt[sp_acnt[1]][sp_payee[1]] +=1
                }
                x++
-           }
-           if (c == 2) {
-               payee_cnt[sp_payee[1]] +=1
-           } else {
-               for (k in payee_cnt_at_txn){
-                   payee_cnt[k] += 1
-               }
            }
        }
    }
 
    print("Payee|Count|Name")
-   for (pid in payee_cnt){
-       printf("%s|%i|%s\n", pid, payee_cnt[pid], payee[pid])
+   for (acnt in payee_cnt){
+       for (pid in payee_cnt[acnt]) {
+           printf("%s | %s | %s|%i|%s\n", acnt, acnt_full_name[acnt], pid, payee_cnt[acnt][pid], payee[pid])
+       }
    }
 }
