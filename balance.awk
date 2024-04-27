@@ -40,6 +40,7 @@ function parse_account_full_names(){
 }
 
 function parse_dictionaries(){
+   asset_flag = 0
    for (line in f) {
        if (f[line] ~ /<ACCOUNT .*opened.*/) {
            match(f[line], /id="([^"]+)"/, id_arr)
@@ -61,18 +62,35 @@ function parse_dictionaries(){
            match(f[line], /name="([^"]*)"/, py_arr)
            payee[pi_arr[1]] = escape_special_characters(py_arr[1], tub)
        }
+
+       if (f[line] ~ /<ACCOUNT .*id="AStd::Asset".*>/) {
+           asset_flag = 1
+       }
+
+       if (f[line] ~ /<\/ACCOUNT>/) {
+           asset_flag = 0
+       }
+       if ((asset_flag == 1) && (f[line] ~ /<SUBACCOUNT/)){
+           match(f[line], /id="([^"]+)"/, sub_id_arr)
+           asset_acnts[sub_id_arr[1]] = sub_id_arr[1]
+       }
    }
 }
 
+function abs(x) {
+    return x < 0 ? -x : x
+}
 
 BEGIN {
-    PROCINFO["sorted_in"] = "@val_num_desc"
+    PROCINFO["sorted_in"] = "@unsorted"
     AccountRenaming["Asset"] = "Assets"
     AccountRenaming["Liability"] = "Liabilities"
     AccountRenaming["Expense"] = "Expenses"
 
     Categories["12"] = "Income"
     Categories["13"] = "Expense"
+
+    zero_amount_acnts = (z == "") ? 0: z
 }{
     # Main loop: read all lines into buffer
     f[i=1] = $0
@@ -130,8 +148,10 @@ END {
        }
    }
 
-   print("Account|Count|Name")
-   for (acnt in balance){
-       printf("%s | %s | %s | %9.2f\n", acnt, acnt_full_name[acnt], acnt_curr[acnt], balance[acnt])
+   print("Account ID| Account |Currency| Balance")
+   for (acnt in asset_acnts){
+       if ((abs(balance[acnt]) > 0.001) || (zero_amount_acnts == 1)) {
+           printf("%s | %s | %s | %9.2f\n", acnt, acnt_full_name[acnt], acnt_curr[acnt], balance[acnt])
+       }
    }
 }
