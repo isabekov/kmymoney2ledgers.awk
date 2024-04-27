@@ -126,21 +126,23 @@ END {
                   g = 0
                   ++c
                   match(f[x], /account="([^"]+)"/, sp_acnt)
-                  match(f[x], /payee="([^"]+)"/, sp_payee)
+                  if (sp_acnt[1] in asset_acnts) {
+                      match(f[x], /payee="([^"]+)"/, sp_payee)
 
-                  match(f[x], /shares="([^"]+)"/, shares_arr)
-                  if (length(shares_arr) != 0){
-                      sp_lst_shares[c] = evaluate_fraction(shares_arr)
-                  }
+                      match(f[x], /shares="([^"]+)"/, shares_arr)
+                      if (length(shares_arr) != 0){
+                          sp_lst_shares[c] = evaluate_fraction(shares_arr)
+                      }
 
-                  match(f[x], /value="([^"]+)"/, value_arr)
-                  if (length(value_arr) != 0){
-                      sp_lst_val[c] = evaluate_fraction(value_arr)
-                  }
-                  if (txn_commodity == acnt_curr[sp_acnt[1]]) {
-                      balance[sp_acnt[1]] += sp_lst_val[c]
-                  } else {
-                      balance[sp_acnt[1]] += sp_lst_shares[c]
+                      match(f[x], /value="([^"]+)"/, value_arr)
+                      if (length(value_arr) != 0){
+                          sp_lst_val[c] = evaluate_fraction(value_arr)
+                      }
+                      if (txn_commodity == acnt_curr[sp_acnt[1]]) {
+                          balance[sp_acnt[1]] += sp_lst_val[c]
+                      } else {
+                          balance[sp_acnt[1]] += sp_lst_shares[c]
+                      }
                   }
                }
                x++
