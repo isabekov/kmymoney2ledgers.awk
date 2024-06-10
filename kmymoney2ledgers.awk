@@ -261,19 +261,16 @@ function parse_transactions(){
                    }
                }
            }
-           # Transaction level tags are defined only for transactions with 2 splits, one of which is empty.
-           if (c==2){
-               if ((tags_concat[1] == "") && (tags_concat[2] == "")){
-                   txn_tags = ""
-               } else {
-                   # At least one split has tags
-                   txn_tags = (tags_concat[1] == "") ? tags_concat[2] : tags_concat[1]
-                   fmt_tags_str = tub ? "%s" : "Tags=%s"
-                   txn_tags = sprintf(fmt_tags_str, txn_tags)
-               }
-           } else {
+           # Transaction level tags are defined in the 1st split
+           if (tags_concat[1] == ""){
                txn_tags = ""
+           } else {
+               # At least one split has tags
+               txn_tags = tags_concat[1]
+               fmt_tags_str = tub ? "%s" : "Tags=%s"
+               txn_tags = sprintf(fmt_tags_str, txn_tags)
            }
+
            delete sp_lst_tags
            if (tub) {
                if (tpt) {
