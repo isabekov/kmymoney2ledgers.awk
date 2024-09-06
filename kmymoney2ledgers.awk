@@ -361,7 +361,7 @@ function parse_transactions(){
                 }
 
                 # If there are more than 2 splits, then tag should be at split level for hledger.
-                if (c != 2){
+                if ((c > 2) && (i > 1)){
                     if (!sp_lst_memo[i] || has_new_line(sp_lst_memo[i])){
                         if (tags_concat[i] != ""){
                             # Tags in Beancount cannot be at split level! Commenting them out.
