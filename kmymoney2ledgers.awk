@@ -383,14 +383,36 @@ function parse_transactions(){
                         }
                     }
                 } else { # Tags at transaction level are set above
-                    if (!sp_lst_memo[i] || (i == 1)){
+                    if (i == 1){
                         printf("\n")
                     } else {
-                        if (has_new_line(sp_lst_memo[i])){
-                            printf("\n  %s\n", memo_with_newline_to_multiple_lines_comment(sp_lst_memo[i]))
+                        if (sp_lst_memo[i] != "") {
+                            if (has_new_line(sp_lst_memo[i])){
+                                if (tags_concat[i] != ""){
+                                    # Tags in Beancount cannot be at split level! Commenting them out.
+                                    fmt_tags_str = tub ? " ; %s" : " ; Tags=%s"
+                                    printf(fmt_tags_str, tags_concat[i])
+                                }
+                                printf("\n  %s\n", memo_with_newline_to_multiple_lines_comment(sp_lst_memo[i]))
+                            } else {
+                                if (tags_concat[i] != ""){
+                                    # Tags in Beancount cannot be at split level! Commenting them out.
+                                    fmt_tags_str = tub ? " ; %s %s\n" : " ; %s, Tags=%s\n"
+                                    printf(fmt_tags_str, sp_lst_memo[i], tags_concat[i])
+                                } else {
+                                    printf(" ; %s\n", sp_lst_memo[i])
+                                }
+                            }
                         } else {
-                            printf("; %s\n", sp_lst_memo[i])
+                            if (tags_concat[i] != ""){
+                                # Tags in Beancount cannot be at split level! Commenting them out.
+                                fmt_tags_str = tub ? " ; %s\n" : " ; Tags=%s\n"
+                                printf(fmt_tags_str, tags_concat[i])
+                            } else {
+                                printf("\n")
+                            }
                         }
+
                     }
                 }
            }
@@ -422,9 +444,9 @@ function parse_currency_prices(){
                    if (length(price_arr) != 0){
                        price_expr = evaluate_fraction(price_arr)
                        if (tub){
-                           printf("%s price %s %.4f %s\n", price_date, price_from, price_expr, price_to)
+                           printf("%s price %s %8.4f %s\n", price_date, price_from, price_expr, price_to)
                        } else {
-                           printf("P %s %s %.4f %s\n", gensub(/-/, "/", "g", price_date), price_from, price_expr, price_to)
+                           printf("P %s %s %8.4f %s\n", gensub(/-/, "/", "g", price_date), price_from, price_expr, price_to)
                        }
                    }
                }
