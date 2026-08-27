@@ -271,6 +271,15 @@ function parse_transactions(){
                txn_tags = sprintf(fmt_tags_str, txn_tags)
            }
 
+           # Find the actual payee ID (it may not be on the first split)
+           txn_main_payee_id = ""
+           for (i=1; i <= c; i++){
+               if (sp_lst_payee[i] != ""){
+                   txn_main_payee_id = sp_lst_payee[i]
+                   break
+               }
+           }
+
            delete sp_lst_tags
            if (tub) {
                if (tpt) {
@@ -281,44 +290,44 @@ function parse_transactions(){
 
                if (txn_tags == ""){
                    if (tpp) {
-                       printf("%s txn \"%s\" ; %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1])
+                       printf("%s txn \"%s\" ; %s\n", post_date_str, payee[txn_main_payee_id], txn_main_payee_id)
                    } else {
-                       printf("%s txn \"%s\"\n", post_date_str, payee[sp_lst_payee[1]])
+                       printf("%s txn \"%s\"\n", post_date_str, payee[txn_main_payee_id])
                    }
                } else {
                    if (tpp) {
-                       printf("%s txn \"%s\" %s ; %s\n", post_date_str, payee[sp_lst_payee[1]], txn_tags, sp_lst_payee[1])
+                       printf("%s txn \"%s\" %s ; %s\n", post_date_str, payee[txn_main_payee_id], txn_tags, txn_main_payee_id)
                    } else {
-                       printf("%s txn \"%s\" %s\n", post_date_str, payee[sp_lst_payee[1]], txn_tags)
+                       printf("%s txn \"%s\" %s\n", post_date_str, payee[txn_main_payee_id], txn_tags)
                    }
                }
            } else {
                if (txn_tags == ""){
                    if (tpp) {
                        if (tpt) {
-                           printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1])
+                           printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[txn_main_payee_id], txn_main_payee_id)
                        } else {
-                           printf("\n%s (:) %s ; %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1])
+                           printf("\n%s (:) %s ; %s\n", post_date_str, payee[txn_main_payee_id], txn_main_payee_id)
                        }
                    } else {
                        if (tpt) {
-                           printf("\n%s (%s) %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]])
+                           printf("\n%s (%s) %s\n", post_date_str, txn_id[1], payee[txn_main_payee_id])
                        } else {
-                           printf("\n%s (:) %s\n", post_date_str, payee[sp_lst_payee[1]])
+                           printf("\n%s (:) %s\n", post_date_str, payee[txn_main_payee_id])
                        }
                    }
                } else {
                    if (tpp) {
                        if (tpt) {
-                           printf("\n%s (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                           printf("\n%s (%s) %s ; %s, %s\n", post_date_str, txn_id[1], payee[txn_main_payee_id], txn_main_payee_id, txn_tags)
                        } else {
-                           printf("\n%s (:) %s ; %s, %s\n", post_date_str, payee[sp_lst_payee[1]], sp_lst_payee[1], txn_tags)
+                           printf("\n%s (:) %s ; %s, %s\n", post_date_str, payee[txn_main_payee_id], txn_main_payee_id, txn_tags)
                        }
                    } else {
                        if (tpt) {
-                           printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[sp_lst_payee[1]], txn_tags)
+                           printf("\n%s (%s) %s ; %s\n", post_date_str, txn_id[1], payee[txn_main_payee_id], txn_tags)
                        } else {
-                           printf("\n%s (:) %s ; %s\n", post_date_str, payee[sp_lst_payee[1]], txn_tags)
+                           printf("\n%s (:) %s ; %s\n", post_date_str, payee[txn_main_payee_id], txn_tags)
                        }
                    }
                }
